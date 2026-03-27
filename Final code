@@ -1,0 +1,37 @@
+import numpy as np
+from scipy.signal import butter, filtfilt
+from sklearn.ensemble import RandomForestClassifier
+from datetime import datetime
+
+# --- 1. Signal Processing Core ---
+def clean_biomedical_signal(raw_data):
+    b, a = butter(3, 0.1)
+    return filtfilt(b, a, raw_data)
+
+# --- 2. AI Engine Core ---
+class DrMarcoIntegratedSystem:
+    def __init__(self, trained_model):
+        self.model = trained_model
+        self.threshold = 0.5
+
+    def process_and_analyze(self, raw_wave, mutation_flag, quality):
+        # Clean the signal first
+        clean_wave = clean_biomedical_signal(raw_wave)
+        signal_strength = np.max(clean_wave)
+        
+        # Prepare for AI
+        features = np.array([signal_strength, mutation_flag, quality]).reshape(1, -1)
+        prediction = self.model.predict(features)[0]
+        confidence = self.model.predict_proba(features).max() * 100
+        
+        # Logic for Quality & Warnings
+        diag = "POSITIVE (ctDNA Detected)" if prediction == 1 else "NEGATIVE"
+        if 0.5 <= quality < 0.7:
+            diag += " (Low Confidence Warning)"
+            confidence -= 10
+            
+        return diag, confidence, quality
+
+# --- 3. Deployment / Execution ---
+# (Assuming clf is trained as we did before)
+my_device = DrMarcoIntegratedSystem(clf)
